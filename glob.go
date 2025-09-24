@@ -134,6 +134,44 @@ func (g *matchGlob) Match(fsys fs.FS, dir string, includeDirs bool) iter.Seq2[st
 	}
 }
 
+func (g *matchGlob) MatchPath(p string, includeDirs bool) bool {
+	names := slices.Collect(fx.Filter(strings.SplitSeq(p, "/"), func(s string) bool { return s != "" }))
+	if len(names) == 0 {
+		return false
+	}
+
+	include, exclude := g.include, g.exclude
+	for _, dir := range names[:len(names)-1] {
+		var nextInclude, nextExclude []pattern
+		for _, p := range exclude {
+			if p.matchDir(dir, &nextExclude) {
+				return false
+			}
+		}
+		for _, p := range include {
+			p.matchDir(dir, &nextInclude)
+		}
+		if len(nextInclude) == 0 {
+			return false
+		}
+		include, exclude = nextInclude, nextExclude
+	}
+
+	var nextInclude, nextExclude []pattern
+	last := names[len(names)-1]
+	for _, p := range exclude {
+		if p.matchDir(last, &nextExclude) {
+			return false
+		}
+	}
+	for _, p := range include {
+		if p.matchDir(last, &nextInclude) {
+			return true
+		}
+	}
+	return false
+}
+
 // matchStep advances the current matches against the contents of dir.
 func matchStep(fsys fs.FS, dir string, yieldDir, includeDirs bool, include, exclude []pattern, yield func(string, error) bool) bool {
 	var nextInclude, nextExclude []pattern
@@ -231,6 +269,10 @@ func (allGlob) Match(fsys fs.FS, dir string, includeDirs bool) iter.Seq2[string,
 	}
 }
 
+func (allGlob) MatchPath(p string, includeDirs bool) bool {
+	return true
+}
+
 func allStep(fsys fs.FS, dir string, yieldDir, includeDirs bool, yield func(string, error) bool) bool {
 	infos, err := fs.ReadDir(fsys, dir)
 	if err != nil {
@@ -258,6 +300,10 @@ func (noneGlob) Match(fsys fs.FS, dir string, includeDirs bool) iter.Seq2[string
 	return func(_ func(string, error) bool) {}
 }
 
+func (noneGlob) MatchPath(p string, includeDirs bool) bool {
+	return false
+}
+
 // A Glob matches paths in a directory against a set of include and exclude patterns.
 type Glob interface {
 	// Match returns a sequence of (string, error) pairs for paths under dir that match the glob's include and exclude
@@ -265,6 +311,9 @@ type Glob interface {
 	// read the directory's entries. If includeDirs is true, matching directories will be included in the sequence prior
 	// to their contents.
 	Match(fsys fs.FS, dir string, includeDirs bool) iter.Seq2[string, error]
+
+	// MatchPath returns true if the given path matches the glob's includes and excludes.
+	MatchPath(path string, includeDirs bool) bool
 }
 
 // New creates a new Glob from the given lists of include and exclude patterns.
