@@ -1,6 +1,6 @@
 module github.com/pgavlin/glob
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/hexops/autogold/v2 v2.3.0

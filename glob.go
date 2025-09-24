@@ -102,7 +102,7 @@ func always(patterns []pattern) bool {
 
 // hasMeta reports whether p contains any of the metacharacters recognized by path.Match.
 func hasMeta(p string) bool {
-	return strings.IndexAny(p, "*?[\\") != -1
+	return strings.ContainsAny(p, "*?[\\")
 }
 
 func literal(patterns []pattern) (string, []pattern, bool) {
@@ -134,7 +134,7 @@ func (g *matchGlob) Match(fsys fs.FS, dir string, includeDirs bool) iter.Seq2[st
 	}
 }
 
-func (g *matchGlob) MatchPath(p string, includeDirs bool) bool {
+func (g *matchGlob) MatchPath(p string) bool {
 	names := slices.Collect(fx.Filter(strings.SplitSeq(p, "/"), func(s string) bool { return s != "" }))
 	if len(names) == 0 {
 		return false
@@ -269,7 +269,7 @@ func (allGlob) Match(fsys fs.FS, dir string, includeDirs bool) iter.Seq2[string,
 	}
 }
 
-func (allGlob) MatchPath(p string, includeDirs bool) bool {
+func (allGlob) MatchPath(p string) bool {
 	return true
 }
 
@@ -300,7 +300,7 @@ func (noneGlob) Match(fsys fs.FS, dir string, includeDirs bool) iter.Seq2[string
 	return func(_ func(string, error) bool) {}
 }
 
-func (noneGlob) MatchPath(p string, includeDirs bool) bool {
+func (noneGlob) MatchPath(p string) bool {
 	return false
 }
 
@@ -313,7 +313,7 @@ type Glob interface {
 	Match(fsys fs.FS, dir string, includeDirs bool) iter.Seq2[string, error]
 
 	// MatchPath returns true if the given path matches the glob's includes and excludes.
-	MatchPath(path string, includeDirs bool) bool
+	MatchPath(path string) bool
 }
 
 // New creates a new Glob from the given lists of include and exclude patterns.

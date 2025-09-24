@@ -174,7 +174,7 @@ func testGlob(t *testing.T, paths []string, includes, excludes []string, include
 
 	assert.False(t, fx.Any(maps.Values(fsys.reads), func(c int) bool { return c > 1 }))
 
-	pathMatches := slices.Collect(fx.Filter(fsys.paths(includeDirs), func(f string) bool { return glob.MatchPath(f, includeDirs) }))
+	pathMatches := slices.Collect(fx.Filter(fsys.paths(includeDirs), func(f string) bool { return glob.MatchPath(f) }))
 	assert.Equal(t, matches, pathMatches)
 
 	autogold.ExpectFile(t, map[string]any{
