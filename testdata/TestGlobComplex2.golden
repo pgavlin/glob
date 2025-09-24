@@ -1,0 +1,10 @@
+map[string]interface{}{"matches": []string{"2/0/aa", "a/0/aa", "a/1/aa"}, "reads": map[string]int{
+	".":      1,
+	"1":      1,
+	"2":      1,
+	"2/0":    1,
+	"2/0/aa": 1,
+	"a":      1,
+	"a/0":    1,
+	"a/1":    1,
+}}
